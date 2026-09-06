@@ -29,6 +29,50 @@ app.get('/database', async (request, response) => {
     });
   }
 });
+app.get('/produtos', async (request, response) => {
+    try {
+        const result = await pool.query('SELECT * FROM produtos ORDER BY id');
+
+        response.json(result.rows);
+    } catch (error) {
+        console.error('Erro ao listar produtos:', error.message);
+
+        response.status(500).json({
+            message: 'Erro ao listar produtos.'
+        });
+    }
+});
+app.post('/produtos', async (request, response) => {
+    const {
+        codigo,
+        nome,
+        descricao = null,
+        unidade_medida = 'UN'
+    } = request.body;
+
+    if (!codigo || !nome) {
+        return response.status(400).json({
+            message: 'Código e nome são obrigatórios.'
+        });
+    }
+
+    try {
+        const result = await pool.query(
+            `INSERT INTO produtos (codigo, nome, descricao, unidade_medida)
+             VALUES ($1, $2, $3, $4)
+             RETURNING *`,
+            [codigo, nome, descricao, unidade_medida]
+        );
+
+        return response.status(201).json(result.rows[0]);
+    } catch (error) {
+        console.error('Erro ao cadastrar produto:', error.message);
+
+        return response.status(500).json({
+            message: 'Erro ao cadastrar produto.'
+        });
+    }
+});
 app.listen(PORT, () => {
   console.log(`Servidor do PCP funcionando na porta ${PORT}`);
 });
