@@ -97,6 +97,49 @@ app.post('/produtos', async (request, response) => {
         });
     }
 });
+app.put('/produtos/:id', async (request, response) => {
+  try {
+    const { id } = request.params;
+
+    const {
+      codigo,
+      nome,
+      descricao = null,
+      unidade_medida = 'UN'
+    } = request.body;
+
+    if (!codigo || !nome) {
+      return response.status(400).json({
+        message: 'Código e nome são obrigatórios.'
+      });
+    }
+
+    const result = await pool.query(
+      `UPDATE produtos
+       SET codigo = $1,
+           nome = $2,
+           descricao = $3,
+           unidade_medida = $4
+       WHERE id = $5
+       RETURNING *`,
+      [codigo, nome, descricao, unidade_medida, id]
+    );
+
+    if (result.rows.length === 0) {
+      return response.status(404).json({
+        message: 'Produto não encontrado.'
+      });
+    }
+
+    return response.json(result.rows[0]);
+  } catch (error) {
+    console.error('Erro ao atualizar produto:', error.message);
+
+    return response.status(500).json({
+      message: 'Erro ao atualizar produto.'
+    });
+  }
+});
 app.listen(PORT, () => {
   console.log(`Servidor do PCP funcionando na porta ${PORT}`);
 });
