@@ -42,6 +42,30 @@ app.get('/produtos', async (request, response) => {
         });
     }
 });
+app.get('/produtos/:id', async (request, response) => {
+  try {
+    const { id } = request.params;
+
+    const result = await pool.query(
+      'SELECT * FROM produtos WHERE id = $1',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return response.status(404).json({
+        message: 'Produto não encontrado.'
+      });
+    }
+
+    response.json(result.rows[0]);
+  } catch (error) {
+    console.error('Erro ao buscar produto:', error.message);
+
+    response.status(500).json({
+      message: 'Erro ao buscar produto.'
+    });
+  }
+});
 app.post('/produtos', async (request, response) => {
     const {
         codigo,
